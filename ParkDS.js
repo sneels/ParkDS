@@ -1,95 +1,96 @@
-'use strict';
+﻿'use strict';
 
+const Test = function () {
+    const c = require('./Config/Config');
+    const d = require('./DataSource/DataSource');
+    const cfg = new c();
+    const ds = new d();
+    this.Certificate = {
+        Cert: "",
+        Key: ""
+    };
+
+    const Start = function () {
+        var wss = new (require('./WebSocket/Server/Server'))();
+        wss.Initialize(this.Config.Settings.Port, this.Certificate.Cert, this.Certificate.Key);
+        wss.Start();
+        for (var domain in cfg.Domains) {
+            if ((domain != cfg.Settings.Name) && cfg.Domains[domain].IsCloud) {
+
+                var wsClient = new (require('./WebSocket/Client/Client'))(domain, "/auth");
+                new (require('./WebSocket/Client/ClientList'))().Add(wsClient);
+                wsClient.Connect();
+            }
+        }
+    }
+
+    const Stop = function () {
+        var wss = new (require('./WebSocket/Server/Server'))();
+        wss.Stop();
+
+        var clients = new (require('./WebSocket/Client/ClientList'))();
+        for (var domain in cfg.Domains) {
+            if ((domain != cfg.Settings.Name) && cfg.Domains[domain].IsCloud) {
+                clients.Remove(clients.Clients[domain]);
+                wsClient.Disconnect();
+            }
+        }
+    }
+
+    return {
+        Start: Start,
+        Stop: Stop
+    }
+}
 /**
  * Class representing a Data Source Park.
- * */
+ * */ 
 class ParkDS {
-    /**
-     * Create a new `ParkDS`
-     * */
+   /**
+    * Create a new `ParkDS`
+    * */ 
     constructor() {
-        /** @private {Array} private array */
-        this._observers = [];
-        this._status = new Object({
-            WebSocket: {
-                Server: {
-                    Server: "",
-                    Status: 0,
-                    Clients: []
-                },
-                Clients: []
-            },
-            DataSources: []
-        });
+   
+       var c = new (require('./Config/Config'))();
+       var d = new (require('./DataSource/DataSource'))();
 
-        this.Config = new (require('./Config/Config'))();
-        this.DataSource = new (require('./DataSource/DataSource'))();
-        this.WebSocket = new (require('./WebSocket/WebSocket'))();
+       this.Config = c;
+       this.DataSource = d;
+       this.Certificate = {
+           Cert: "",
+           Key: ""
+       };
+
     }
 
-    // Observer Pattern
-    /**
-     * Add an observer to the list
-     * @param {any} observer
-     * @returns {Boolean}
-     */
-    AddObserver(observer) {
-        var exists = false
-        for (var i in this._observers) {
-            if (this._observers[i] == observer) {
-                exists = true;
-                break;
-            }
-        }
-        if (!exists) {
-            this._observers.push(observer);
-        }
+    Start() {
+       var wss = new (require('./WebSocket/Server/Server'))();
+       wss.Initialize(this.Config.Settings.Port, this.Certificate.Cert, this.Certificate.Key);
+       wss.Start();
+       for (var domain in this.Config.Domains) {
+           if ((domain != this.Config.Settings.Name) && this.Config.Domains[domain].IsCloud) {
 
-        this.WebSocket.Server.Server.AddObserver(this);
-        this.WebSocket.Client.Clients.AddObserver(this);
-        this.Update();
-        return true
+               var wsClient = new (require('./WebSocket/Client/Client'))(domain, "/auth");
+               new (require('./WebSocket/Client/ClientList'))().Add(wsClient);
+               wsClient.Connect();
+           }
+       }
     }
 
-    /**
-     * Remove an observer from the list
-     * @param {any} observer
-     */
-    RemoveObserver(observer) {
-        for (var i in this._observers) {
-            if (this._observers[i] == observer) {
-                this._observers.splice(i);
-            }
-        }
-    }
+    Stop() {
+       var wss = new (require('./WebSocket/Server/Server'))();
+       wss.Initialize();
+       wss.Stop();
 
-    /**
-     * Update this object from the Obserable
-     * @param {any} value
-     * @private
-     */
-    Update(value) {
-        if (typeof (value) != "undefined") {
-            if (value['Server']) {
-                this._status.WebSocket.Server = value;
-            } else {
-                this._status.WebSocket.Clients = value;
-            }
-
-
-            this.Notify()
-        }
-    }
-
-    /**
-     * Notify any observers on changes
-     * */
-    Notify() {
-        for (var i in this._observers) {
-            this._observers[i].Update(this._status);
-        }
+       var clients = new (require('./WebSocket/Client/ClientList'))();
+       for (var domain in clients.Clients) {
+           if ((domain != this.Config.Settings.Name) && this.Config.Domains[domain].IsCloud) {
+               clients.Remove(clients.Clients[domain]);
+               wsClient.Disconnect();
+           }
+       }
 
     }
 }
-
+//*/
 module.exports = ParkDS;

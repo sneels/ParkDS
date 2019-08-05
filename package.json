@@ -1,8 +1,8 @@
 {
   "name": "parkds",
-  "version": "0.8.2",
+  "version": "0.0.3",
   "description": "ParkDS is a park of data sources over 1 or more networks",
-  "main": "test.js",
+  "main": "index.js",
   "author": {
     "name": "Stijn Neels"
   },
@@ -10,6 +10,7 @@
     "md5": "^2.2.1",
     "mssql": "^5.1.0",
     "mysql": "^2.17.1",
+    "node-enumjs": "^1.0.2",
     "promised-deferred": "^2.0.2",
     "uuid": "^3.3.2",
     "ws": "^7.1.0"

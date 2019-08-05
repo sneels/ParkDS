@@ -3,7 +3,6 @@
 const Config = require('../Config/Config');
 const Queue = require('./Queue');
 const PackagesContainer = require('./Package/PackagesContainer');
-const ParkDS = new (require("../ParkDS"))();
 
 class Router {
     constructor() {
@@ -31,35 +30,51 @@ class Router {
                 Server: new Object()
             }
         });
-
         routeObj.Local.id = pkgcontainer.id;
 
+        // Was the Packages Container created locally?
         if (pkgcontainer.Sender == this.Config.Settings.Name) {
+            // Yes? Loop through the packages for further routing.
             for (var i in pkgcontainer.Packages) {
                 var dom = this.Config.DataSources[pkgcontainer.Packages[i].Database];
+                // Is the Data Source for the current package local?
                 if (dom.Domain == this.Config.Settings.Name) {
+                    // Yes? Add to local routing packages container.
                     routeObj.Local.Packages.push(pkgcontainer.Packages[i]);
                 } else {
-                    if (this.Config.Settings.IsCloud && !dom.IsCloud) {
+                    // No? Are we a cloud server and the destination isn't? Run the transfer through the Server->Client connection.
+                    console.log(this.Config.Domains[dom.Domain].IsCloud);
+                    if ((this.Config.Settings.IsCloud && !this.Config.Domains[dom.Domain].IsCloud)) {
+                        // Does the Package Container for said domain exist already?
                         if (typeof (routeObj.WebSocket.Server[dom.Domain]) == "undefined") {
+                            // No? Create it
                             routeObj.WebSocket.Server[dom.Domain] = new PackagesContainer();
                             routeObj.WebSocket.Server[dom.Domain].id = pkgcontainer.id;
                             routeObj.WebSocket.Server[dom.Domain].Sender = pkgcontainer.Sender;
                             routeObj.WebSocket.Server[dom.Domain].Recipient = dom.Domain;
                         }
+                        // Add the package to the packages container for said domain.
                         routeObj.WebSocket.Server[dom.Domain].Packages.push(pkgcontainer.Packages[i]);
+
+                        // No? We are either not in the cloud or both me and the destination are cloud based.
+                        // Route through a Client -> Server connection.
                     } else {
+                        // Does the Package Container for said domain exist already?
                         if (typeof (routeObj.WebSocket.Client[dom.Domain]) == "undefined") {
+                            // No? Create it.
                             routeObj.WebSocket.Client[dom.Domain] = new PackagesContainer();
                             routeObj.WebSocket.Client[dom.Domain].id = pkgcontainer.id;
                             routeObj.WebSocket.Client[dom.Domain].Sender = pkgcontainer.Sender;
                             routeObj.WebSocket.Client[dom.Domain].Recipient = dom.Domain;
                         }
+                        // Add the package to the packages container for said domain.
                         routeObj.WebSocket.Client[dom.Domain].Packages.push(pkgcontainer.Packages[i]);
                     }
                 }
             }
+            // No? Are we te recipient of the packages container?
         } else if (pkgcontainer.Recipient == this.Config.Settings.Name) {
+            // Yes? Route locally.
             this.RouteLocally(pkgcontainer);
         }
 
@@ -75,6 +90,7 @@ class Router {
             this.RouteLocally(routeObj.Local);
         }
 
+        // Calculate the amount of entries in an Object.
         Object.size = function (obj) {
             var size = 0, key;
             for (key in obj) {
@@ -95,26 +111,35 @@ class Router {
             }
         }
 
+        // Get the size of an object.
         size = Object.size(routeObj.WebSocket.Server);
         if (size > 0) {
             for (var key in routeObj.WebSocket.Server) {
                 if (routeObj.WebSocket.Server[key].Packages.length > 0) {
-                    console.log(`WebSocket Server [${key}] routing: ${this.routeObj.WebSocket.Server[key].Packages.length}`);
+                    console.log(`WebSocket Server [${key}] routing: ${routeObj.WebSocket.Server[key].Packages.length}`);
                     this.RouteThroughWebSocketServer(routeObj.WebSocket.Server[key]);
                 }
             }
         }
 
+        // Return the value either through Websocket or Return Promise.
+        // Did our request come from a WebSocket Connection?
         if (fromWebSocket > 0) {
+            // Yes? Send the Packages back upon resolve.
             var self = this;
             queued.then(function (value) {
+                // Did the request come from the server?
                 if (fromWebSocket == 1) {
+                    // Yes? Send it back through the server.
                     self.RouteThroughWebSocketServer(value, value.Sender);
                 } else {
+                    // No? Send it back through the client.
                     self.RouteThroughWebSocketClient(value, value.Sender);
                 }
             });
+            // No? We got our request from a Data Source Manager.
         } else {
+            // Return the Promise for a resolved packages container.
             return queued;
         }
     }
@@ -142,8 +167,18 @@ class Router {
      * @private
      */
     RouteThroughWebSocketClient(pkgcontainer, domain) {
-        var client = ParkDS.WebSocket.Client.Clients.Clients[domain];
-        client.Send(pkgcontainer);
+        const Config = new (require("../Config/Config"))();
+        const WebSocket = new (require("../WebSocket/WebSocket"))();
+        var client;
+        var reroute = false;
+        console.log(Object.keys(WebSocket.Client.Clients.Clients)[0]);
+        if (!Config.Settings.IsCloud && !Config.Domains[domain].IsCloud) {
+            client = WebSocket.Client.Clients.Clients[Object.keys(WebSocket.Client.Clients.Clients)[0]];
+            reroute = true;
+        } else {
+            client = WebSocket.Client.Clients.Clients[domain];
+        }
+        client.Send(pkgcontainer, reroute);
     }
 
     /**
@@ -152,7 +187,7 @@ class Router {
      * @private
      */
     RouteThroughWebSocketServer(pkgcontainer) {
-        var wss = ParkDS.WebSocket.Server.Server;
+        var wss = new (require('../WebSocket/Server/Server'))();
         wss.SendToClient(pkgcontainer);
     }
 }

@@ -3,7 +3,7 @@
 const MySql = require('mysql');
 const DeferredState = require('promised-deferred');
 
-const IConnector = (new (require('../../../ParkDS'))).DataSource.Connector.IConnector;
+const IConnector = (new (require('../../..'))).DataSource.Connector.IConnector;
 
 class MySqlConnector extends IConnector {
 

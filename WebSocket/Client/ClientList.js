@@ -28,9 +28,9 @@ class ClientList {
      * */
     Update() {
         var obj = []
-        var ParkDS = new (require('../../ParkDS'))();
-        for (var key in ParkDS.Config.Domains) {
-            if (key != ParkDS.Config.Settings.Name) {
+        var Config = new (require('../../Config/Config'))();
+        for (var key in Config.Domains) {
+            if (key != Config.Settings.Name) {
                 if (typeof (this.Clients[key]) != "undefined") {
                     obj.push({ Client: key, Status: this.Clients[key].Status });
                 }
@@ -69,9 +69,10 @@ class ClientList {
      * @public
      */
     RemoveObserver(observer) {
+        var Config = new (require('../../Config/Config'))();
         for (var i in this._observers) {
             if (this._observers[i] == observer) {
-                if (key != ParkDS.Config.Settings.Name) {
+                if (key != Config.Settings.Name) {
                     this._observers.splice(i);
                 }
             }

@@ -4,12 +4,23 @@ var IPackage = require('./IPackage');
 var Package = require('./Package');
 
 class PackagesContainer extends IPackage {
-    constructor() {
+    constructor(obj) {
         super();
+
         this.Sender = "";
         this.Recipient = "";
         this.Packages = [];
         this.PackageStates = [];
+        if (typeof (obj) == "object") {
+            this.id = obj.id;
+            this.State = obj.State;
+            this.ReturnToSender = obj.ReturnToSender;
+            this.Sender = obj.Sender;
+            this.Recipient = obj.Recipient;
+            for (var i in obj.Packages) {
+                this.Add(new Package(obj.Packages[i]));
+            }
+        }
     }
 
     /**

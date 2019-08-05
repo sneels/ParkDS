@@ -3,9 +3,9 @@ const PackagesContainer = require('./Package/PackagesContainer');
 const Router = require('./Router');
 class Manager {
     constructor() {
-        var ParkDS = new (require('../ParkDS'));
+        var Config = new (require('../Config/Config'));
         this.PackagesContainer = new PackagesContainer();
-        this.PackagesContainer.Sender = ParkDS.Config.Settings.Name;
+        this.PackagesContainer.Sender = Config.Settings.Name;
     }
 
     /**
@@ -29,7 +29,9 @@ class Manager {
      * @public
      */
     AddAsync(pkg) {
-        var pc = new PackagesContainer()
+        var pc = new PackagesContainer();
+        var Config = new (require('../Config/Config'));
+        pc.Sender = Config.Settings.Name;
         pc.Add(pkg);
 
         // DEBUG LOGGING

@@ -2,11 +2,13 @@
 
 class DataSource {
     constructor() {
-        this.Manager = require('./Manager');
-        this.Queue = new (require('./Queue'))();
         this.Router = require('./Router');
+        this.Manager = require('./Manager');
         this.Packages = new (require('./Package/Packages'))()
         this.Connector = new (require('./Connector/Connector'))();
+        this.Queue = {
+            count: new (require('./Queue'))()._queue.length
+        };
     }
 }
 

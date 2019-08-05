@@ -3,12 +3,12 @@
 const WebSocket = require('ws');
 const url = require('url');
 
-const DataSourcePackagesContainer = require('../../../DataSource/Package/PackagesContainer');
+const PackagesContainer = require('../../../DataSource/Package/PackagesContainer');
 
 class Client {
-    constructor() {
-        this.ws
-        this.Token
+    constructor() {        
+        this.ws;
+        this.Token;   
     }
 
     /**
@@ -18,9 +18,73 @@ class Client {
      */
     Send(dspc) {
         var obj = this._CreateJSON(dspc)
-        this.ws.send(obj);
+        this.ws.send(obj);        
     }
 
+    /**
+     * Event Handler: OnMessage
+     * @param {String} message
+     */
+    OnMessage(message) {
+        var Queue = new (require('../../../DataSource/Queue'));
+        var Router = require('../../../DataSource/Router');
+        var Server = new (require('../../../WebSocket/Server/Server'));
+        try {
+            var now = new Date();
+            var time = ('0' + now.getHours()).slice(-2) + ":" + ('0' + now.getMinutes()).slice(-2) + ":" + ('0' + now.getSeconds()).slice(-2) + "." + ('00' + now.getUTCMilliseconds()).slice(-3);
+            console.log(time + " [\x1b[35mParkDS WebSocket Server\x1b[0m]: Message Received.\x1b[0m");
+            var obj = JSON.parse(message);
+            if (obj.reroute === undefined) {
+
+                var dsp = this._CreatePackage(message);
+                if (dsp.ReturnToSender == 1) {
+                    Queue.ResolvePackages(dsp.id, dsp.Packages)
+                } else {
+                    var dsr = new Router();
+                    dsr.Route(dsp, 1);
+                }
+            } else {
+                var dsp = this._CreatePackage(message);
+                Server.SendToClient(dsp)
+            }
+            
+        }
+        catch (e) {
+            this.OnError(e);
+            this.ws.close(1008, "Client not registered");
+        }
+    }
+
+    /**
+     * Event Handler: OnClose
+     * @param {any} code
+     * @param {any} reason
+     * @public
+     */
+    OnClose(code, reason) {
+        var Server = new (require('../../../WebSocket/Server/Server'));
+        var ClientsList = require('../../../WebSocket/Server/Client/ClientList');
+        if (reason == "") {
+            reason = "Connection Terminated Abnormally";
+        }
+            var now = new Date();
+        var time = ('0' + now.getHours()).slice(-2) + ":" + ('0' + now.getMinutes()).slice(-2) + ":" + ('0' + now.getSeconds()).slice(-2) + "." + ('00' + now.getUTCMilliseconds()).slice(-3);
+        console.log(time + " [\x1b[35mParkDS WebSocket Server\x1b[0m]: Client [\x1b[32m\x1b[1m" + this.Token.User + "@" + this.Token.Path + "\x1b[0m] Disconnected with Code: \x1b[33m" + code + " \x1b[31m" + reason + "\x1b[0m");
+        var wss = Server;
+        var cl = new ClientsList();
+
+        cl.RemoveClientByName(this.Token.User);
+        wss.NotifyObservers();//*/
+    }
+
+    /**
+     * Event Handler: OnError
+     * @param {any} e
+     * @public
+     */
+    OnError(e) {
+        console.log(e);
+    }
 
     /**
      * Create a PackagesContainer from a JSON string
@@ -29,32 +93,17 @@ class Client {
      * @private
      */
     _CreatePackage(json) {
-        var ParkDS = new (require('../../ParkDS'))();
+        var PackagesContainer = (require('../../../DataSource/Package/PackagesContainer'));
         try {
             var obj = JSON.parse(json);
-            var dspc = new ParkDS.DataSource.Packages.PackagesContainer();
-            dspc.id = obj.packet.id;
-            dspc.State = obj.packet.IsResolved;
-            dspc.ReturnToSender = obj.packet.ReturnToSender;
-            dspc.Recipient = obj.packet.Recipient;
-            dspc.Sender = obj.packet.Sender;
+            var dspc = new PackagesContainer(obj.packet);
 
-            for (var i in obj.packet.Packages) {
-                var dsp = new ParkDS.DataSource.Packages.Package();
-                dsp.id = obj.packet.Packages[i].id;
-                dsp.Database = obj.packet.Packages[i].Database;
-                dsp.Name = obj.packet.Packages[i].Name;
-                dsp.Result = obj.packet.Packages[i].Result;
-                dsp.IsResolved = obj.packet.Packages[i].IsResolved;
-                dsp.ReturnToSender = obj.packet.Packages[i].ReturnToSender;
-                dsp.Query = obj.packet.Packages[i].Query;
-                dspc.Add(dsp);
-            }
             return dspc;
         } catch (e) {
             console.log(e);
         }
     }
+
     /**
      * Create a JSON string from a PackagesContainer
      * @param {PackagesContainer} dspc The PackagesContainer

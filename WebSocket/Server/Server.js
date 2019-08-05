@@ -10,7 +10,7 @@ const qs = require('querystring');
 const Client = require('./Client/Client');
 const ClientList = require('./Client/ClientList');
 const TokenList = require('./Token/TokenList');
-
+const Log = require('../../Logger/Log');
 let singletonInstance = null;
 class Server {
     constructor() {
@@ -43,7 +43,7 @@ class Server {
     Initialize(port, certification, key) {
         this.port = port
         var self = this;
-
+        console.log(Log.Type());
         // SSL Server Start
         this.server = https.createServer({
             cert: certification,
@@ -60,10 +60,9 @@ class Server {
 
                             req.on('end', function () {
 
-                                var ParkDS = new (require('../../ParkDS'));
                                 var post = JSON.parse(qs.unescape(body));
                                 var md5 = require('md5');
-                                var cfg = ParkDS.Config;
+                                var cfg = new (require('../../Config/Config'));
                                 var domain;
                                 for (var key in cfg.Domains) {
                                     if (cfg.Domains[key].Name == post.user) {
@@ -76,9 +75,9 @@ class Server {
                                     var hash = md5(hashstr);
                                     if (hash == post.pass) {
 
-                                        var TokenList = ParkDS.WebSocket.Server.Tokens.TokenList;
+                                        var TokenList = new (require('./Token/TokenList'));
 
-                                        var Token = ParkDS.WebSocket.Server.Tokens.Token;
+                                        var Token = require('./Token/Token');
                                         var ip;
 
                                         if (req.headers['x-forwarded-for']) {
@@ -166,73 +165,54 @@ class Server {
      * @public
      */
     Start() {
-        var server = this.server;
-        var self = this;
-        var ParkDS = new (require('../../ParkDS'))();
-        this.wsServer.on('connection', function connection(ws, request) {
-            var client = new Client();
-
-            var token = request.token;
-            var now = new Date();
-            var time = ('0' + now.getHours()).slice(-2) + ":" + ('0' + now.getMinutes()).slice(-2) + ":" + ('0' + now.getSeconds()).slice(-2) + "." + ('00' + now.getUTCMilliseconds()).slice(-3);
-            
-            try {
-                if (token == self.tokenList.Get(token.Token)) {
-                    self.tokenList.Remove(token.Token);
-                    client.Token = token;
-
-                    ws.on('message', function (message) {
-                        try {
-                            
-                            var now = new Date();
-                            var time = ('0' + now.getHours()).slice(-2) + ":" + ('0' + now.getMinutes()).slice(-2) + ":" + ('0' + now.getSeconds()).slice(-2) + "." + ('00' + now.getUTCMilliseconds()).slice(-3);
-                            console.log(time + " [\x1b[35mParkDS WebSocket Server\x1b[0m]: Message Received.\x1b[0m");
-
-                            var dsp = self._CreatePackage(message);
-                            if (dsp.ReturnToSender) {
-                                    ParkDS.DataSource.Queue.ResolvePackages(dsp.id, dsp.Packages)
-                            } else {
-                                var dsr = new ParkDS.DataSource.Router();
-                                dsr.Route(dsp, 1);
-                            }
-                        }
-                        catch (e) {
-                            self.OnError(e);
-                            ws.close(1008, "Client not registered");
-                        }
-                    });
-
-                    ws.on("close", function (code, reason) {
-                        if (reason == "") {
-                            reason = "Connection Terminated Abnormally";
-                        }
-                        var now = new Date();
-                        var time = ('0' + now.getHours()).slice(-2) + ":" + ('0' + now.getMinutes()).slice(-2) + ":" + ('0' + now.getSeconds()).slice(-2) + "." + ('00' + now.getUTCMilliseconds()).slice(-3);
-                        console.log(time + " [\x1b[35mParkDS WebSocket Server\x1b[0m]: Client [\x1b[32m\x1b[1m" + token.User + "@" + token.Path + "\x1b[0m] Disconnected with Code: \x1b[33m" + code + " \x1b[31m" + reason + "\x1b[0m");
-
-                        self.clientList.RemoveClientByName(token.User);
-                        self.NotifyObservers();
-                    });
-
-                    ws.on("error", function (e) {
-                        var now = new Date();
-                        var time = ('0' + now.getHours()).slice(-2) + ":" + ('0' + now.getMinutes()).slice(-2) + ":" + ('0' + now.getSeconds()).slice(-2) + "." + ('00' + now.getUTCMilliseconds()).slice(-3);
-                        console.error(`\x1b[31m${time} [\x1b[35mParkDS WebSocket Server\x1b[31m]: ${e}\x1b[0m`);
-                    });
-
-                    client.ws = ws;
-                    self.clientList.Add(client);
-
-                    self.NotifyObservers();
-                }
-            }
-            catch (e) {
-
-            }
-        });
-        
+        this.wsServer.on('connection', (this.OnConnection.bind(this)));
         this.server.listen(this.port);
         
+    }
+
+    Stop() {
+        this.wsServer.close(function (e) {
+
+        });
+        this.server.close(function (e) {
+
+        });
+    }
+
+    /**
+     * On Connection Event Handler
+     * @param {WebSocket} ws
+     * @param {any} request
+     */
+    OnConnection(ws, request) {
+        var client = new Client();
+        //console.
+        var token = request.token;
+        var now = new Date();
+        var time = ('0' + now.getHours()).slice(-2) + ":" + ('0' + now.getMinutes()).slice(-2) + ":" + ('0' + now.getSeconds()).slice(-2) + "." + ('00' + now.getUTCMilliseconds()).slice(-3);
+        console.log(time + " [\x1b[35mParkDS WebSocket Server\x1b[0m]: Client connected.\x1b[0m");
+        try {
+            if (token == this.tokenList.Get(token.Token)) {
+                client.Token = token;
+                this.tokenList.Remove(token.Token);
+
+                // Client Event Handlers
+                ws.on('message', (client.OnMessage).bind(client));
+                ws.on('close', (client.OnClose).bind(client));
+
+                client.ws = ws;
+                this.clientList.Add(client);
+
+                this.NotifyObservers();
+            }
+        }
+        catch (e) {
+        }
+    
+    }
+
+    OnError(e) {
+        console.log(e);
     }
 
     /**
@@ -242,7 +222,7 @@ class Server {
      */
     SendToClient(pkgcontainer) {
         try {
-            if (pkgcontainer.ReturnToSender) {
+            if (pkgcontainer.ReturnToSender == 1) {
                 this.clientList.GetClientByName(pkgcontainer.Sender).Send(pkgcontainer);
             } else {
                 this.clientList.GetClientByName(pkgcontainer.Recipient).Send(pkgcontainer);
@@ -259,10 +239,11 @@ class Server {
      * @private
      */
     _CreatePackage(json) {
-        var ParkDS = new (require('../../ParkDS'))();
+        var PackagesContainer = new (require('../../DataSource/Package/PackagesContainer'))();
+        var Package = new (require('../../DataSource/Package/Package'))();
         try {
             var obj = JSON.parse(json);
-            var dspc = new ParkDS.DataSource.Packages.PackagesContainer();
+            var dspc = new PackagesContainer();
             dspc.id = obj.packet.id;
             dspc.State = obj.packet.IsResolved;
             dspc.ReturnToSender = obj.packet.ReturnToSender;
@@ -270,7 +251,7 @@ class Server {
             dspc.Sender = obj.packet.Sender;
 
             for (var i in obj.packet.Packages) {
-                var dsp = new ParkDS.DataSource.Packages.Package();
+                var dsp = new Package();
                 dsp.id = obj.packet.Packages[i].id;
                 dsp.Database = obj.packet.Packages[i].Database;
                 dsp.Name = obj.packet.Packages[i].Name;
@@ -306,12 +287,12 @@ class Server {
      * @private
      * */
     GetStatus() {
-        const ParkDS = new (require('../../ParkDS'))();
+        const Config = new (require('../../Config/Config'))();
         var obj = {
-            Server: ParkDS.Config.Settings.Name, Status: this.status, Clients: []
+            Server: Config.Settings.Name, Status: this.status, Clients: []
         };
-        for (var key in ParkDS.Config.Domains) {
-            if (key != ParkDS.Config.Settings.Name) {
+        for (var key in Config.Domains) {
+            if (key != Config.Settings.Name) {
                 if (this.clientList.GetClientByName(key)) {
                     var cs = new Object({ Client: key, Status: 1 })
                     obj.Clients.push(cs);

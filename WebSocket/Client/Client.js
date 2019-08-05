@@ -3,7 +3,8 @@ const WebSocket = require('ws');
 const https = require('https');
 const md5 = require('md5');
 
-const ParkDS = new(require('../../ParkDS'))();
+const Config = new (require('../../Config/Config'))();
+const PackagesContainer = require('../../DataSource/Package/PackagesContainer');
 
 class Client {
     /**
@@ -13,21 +14,21 @@ class Client {
      * @public
      */
     constructor(domain, authurl) {
-        this.ws
-        this.Token
+        this.ws = null;
+        this.Token = null;
         this.Retries = 0;
         this.Status = 0; // -1: Connection Timed Out, Manual Retry Required; 0: Not Connected; 1: Reconnecting; 2: Connected;
 
         this.Server = {
             Name: domain,
-            Address: ParkDS.Config.Domains[domain].Path,
-            Port: ParkDS.Config.Domains[domain].Port,
+            Address: Config.Domains[domain].Path,
+            Port: Config.Domains[domain].Port,
             Path: authurl
         };
 
-        this.Name = ParkDS.Config.Settings.Name;
-        this.Pass = ParkDS.Config.Settings.Password;
-        this.Path = ParkDS.Config.Settings.Path;
+        this.Name = Config.Settings.Name;
+        this.Pass = Config.Settings.Password;
+        this.Path = Config.Settings.Path;
         this._authstring;
         this._data;
 
@@ -86,7 +87,7 @@ class Client {
     Connect() {
         if (this.Status >= 0 && this.Status <= 1) {
             var self = this;
-
+            this.
             var now = new Date();
             var time = ('0' + now.getHours()).slice(-2) + ":" + ('0' + now.getMinutes()).slice(-2) + ":" + ('0' + now.getSeconds()).slice(-2) + "." + ('00' + now.getUTCMilliseconds()).slice(-3);
             console.log(`${time} [\x1b[32mData Source WebSocket Client \x1b[1m${this.Name}@${this.Path}\x1b[0m]: Requesting Auth Token...`);
@@ -104,6 +105,7 @@ class Client {
                                 rejectUnauthorized: false
                             });
 
+                            var Clients = new (require("./ClientList"))();
                             ws.on("error", function (e) {
                                 now = new Date();
                                 time = ('0' + now.getHours()).slice(-2) + ":" + ('0' + now.getMinutes()).slice(-2) + ":" + ('0' + now.getSeconds()).slice(-2) + "." + ('00' + now.getUTCMilliseconds()).slice(-3);
@@ -113,8 +115,11 @@ class Client {
 
                             ws.on("open", function () {
                                 self.Status = 2;
+                               // if (self.Retries > 0) {
+                                    Clients.Add(self);
+                               // }
                                 self.Retries = 0;
-                                ParkDS.WebSocket.Client.Clients.Update();
+                                Clients.Update();
                             });
 
                             ws.on("upgrade", function (e) {
@@ -128,21 +133,24 @@ class Client {
                                 
                                 var dsp = self._CreatePackage(message);
                                 if (dsp.ReturnToSender) {
-                                    ParkDS.DataSource.Queue.ResolvePackages(dsp.id, dsp.Packages)
+                                    var Queue = new (require('../../DataSource/Queue'))();
+                                    Queue.ResolvePackages(dsp.id, dsp.Packages)
                                 } else {
-                                    var dsr = new ParkDS.DataSource.Router();
+                                    var Router = require('../../DataSource/Queue');
+                                    var dsr = new Router();
                                     dsr.Route(dsp, 2);
                                 }
                             });
-
                             ws.on("close", function (errc, errm) {
-                                self.Status = 1;
-                                now = new Date();
-                                time = ('0' + now.getHours()).slice(-2) + ":" + ('0' + now.getMinutes()).slice(-2) + ":" + ('0' + now.getSeconds()).slice(-2) + "." + ('00' + now.getUTCMilliseconds()).slice(-3);
-                                console.log(`\x1b[31m${time}[\x1b[32mData Source WebSocket Client \x1b[1m${self.Name}@${self.Path}\x1b[0m\x1b[31m]: Connection terminated: Code ${errc}: ${errm}\x1b[0m`);
-
-                                ParkDS.WebSocket.Client.Clients.Update();
-                                self.Reconnect();
+                                if (self.Status == 2) {
+                                    self.Status = 1;
+                                    now = new Date();
+                                    time = ('0' + now.getHours()).slice(-2) + ":" + ('0' + now.getMinutes()).slice(-2) + ":" + ('0' + now.getSeconds()).slice(-2) + "." + ('00' + now.getUTCMilliseconds()).slice(-3);
+                                    console.log(`\x1b[31m${time}[\x1b[32mData Source WebSocket Client \x1b[1m${self.Name}@${self.Path}\x1b[0m\x1b[31m]: Connection terminated: Code ${errc}: ${errm}\x1b[0m`);
+                                    Clients.Remove(self);
+                                    Clients.Update();
+                                    self.Reconnect();
+                                }
                             });
                             self.ws = ws;
                             res.on('data', function (d) {
@@ -150,7 +158,6 @@ class Client {
                         } catch (e) {
                             if (e.code == 'ECONNREFUSED') {
                                 self.Reconnect();
-                                    self.Reconnect();
                             }
                         }
                     } else if (res.statusCode == 404) {
@@ -183,16 +190,23 @@ class Client {
         }
     }
 
+    Disconnect() {
+        this.Status = 0;
+        this.ws.close();
+    }
+
     /**
      * Attempt to Reconnect to the server (max tries: 10)
      * @private
      * */
     Reconnect() {
 
-        if (this.Retries < 10) {
+        //if (this.Retries < 10) {
             var e = 0;
             if (this.Retries == 0) {
                 e = 1;
+            } else if (this.Retries == 9) {
+                e = 600;
             } else {
                 for (var i = 0; i <= this.Retries; i++) {
                     e += Math.pow(2, i);
@@ -206,22 +220,30 @@ class Client {
             setTimeout(function () {
                 self.Connect();
             }, s);
-        } else {
+       /* } else {
             this.Status = -1;
             ParkDS.WebSocket.Client.Clients.Update();
-        }
+        }//*/
     }
 
     /**
      * 
-     * @param {DataSourcePackagesContainer} dspc
+     * @param {PackagesContainer} dspc
      */
-    Send(dspc) {
+    Send(dspc, reroute) {
         if (this.Status == 2) {
             var obj = this._CreateJSON(dspc);
+            if (reroute) {
+                obj = JSON.parse(obj);
+                if (dspc.IsResolved) {
+                    obj.reroute = dspc.Sender;
+                } else {
+                    obj.reroute = dspc.Recipient;
+                }
+                obj = JSON.stringify(obj);
+            }
             this.ws.send(obj);
-        }
-        else {
+        } else {
             dspc.DeferredState.Reject();   
         }
     }
@@ -234,26 +256,10 @@ class Client {
      */
     _CreatePackage(json) {
         try {
-            var DataSourcePackage = require('../../DataSource/Package/Package');
             var obj = JSON.parse(json);
-            var dspc = new ParkDS.DataSource.Packages.PackagesContainer();
-            dspc.id = obj.packet.id;
-            dspc.State = obj.packet.IsResolved;
-            dspc.ReturnToSender = obj.packet.ReturnToSender;
-            dspc.Recipient = obj.packet.Recipient;
-            dspc.Sender = obj.packet.Sender;
-
-            for (var i in obj.packet.Packages) {
-                var dsp = new DataSourcePackage();
-                dsp.id = obj.packet.Packages[i].id;
-                dsp.Database = obj.packet.Packages[i].Database;
-                dsp.Name = obj.packet.Packages[i].Name;
-                dsp.Result = obj.packet.Packages[i].Result;
-                dsp.IsResolved = obj.packet.Packages[i].IsResolved;
-                dsp.ReturnToSender = obj.packet.Packages[i].ReturnToSender;
-                dsp.Query = obj.packet.Packages[i].Query;
-                dspc.Add(dsp);
-            }
+            var PackagesContainer = require('../../DataSource/Package/PackagesContainer');
+            var dspc = new PackagesContainer(obj.packet);
+            
             return dspc;
         } catch (e) {
             console.log(e);

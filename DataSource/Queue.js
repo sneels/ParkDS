@@ -9,8 +9,9 @@ class Queue {
         if (!singletonInstance) {
             // If null, set singletonInstance to this Class 
             singletonInstance = this;
+            this.Loggers = [];
+            this._queue = [];
         }
-        this._queue = [];
 
         return singletonInstance;
     }
@@ -27,10 +28,8 @@ class Queue {
         var q = this._queue;
         var qid = this.getID(dspcid);
 
-        // DEBUG LOGGING
-        var now = new Date();
-        var time = ('0' + now.getHours()).slice(-2) + ":" + ('0' + now.getMinutes()).slice(-2) + ":" + ('0' + now.getSeconds()).slice(-2) + "." + ('00' + now.getUTCMilliseconds()).slice(-3);
-        console.log(`${time} [\x1b[33mParkDS: \x1b[1mQueue\x1b[0m]: Container Added to Queue (Total: ${this._queue.length})`);
+        // Log
+        this.Log(`Container Added to Queue(Total: ${this._queue.length})`);
 
         // Resolve Queue with error on wait time-out
         setTimeout(function () {
@@ -54,7 +53,7 @@ class Queue {
             }
         });
 
-        return pkgcontainer.GetPromise();
+        return p;
     }
 
     /**
@@ -94,10 +93,7 @@ class Queue {
             }
         }
 
-        // DEBUG LOGGING
-        var now = new Date();
-        var time = ('0' + now.getHours()).slice(-2) + ":" + ('0' + now.getMinutes()).slice(-2) + ":" + ('0' + now.getSeconds()).slice(-2) + "." + ('00' + now.getUTCMilliseconds()).slice(-3);
-        console.log(`${time} [\x1b[33mParkDS: \x1b[1mQueue\x1b[0m]: Package Resolved (Total Containers Left: ${this._queue.length})`);
+        this.Log(`Package Resolved (Total Containers Left: ${this._queue.length})`);
     }
 
     /**
@@ -124,10 +120,35 @@ class Queue {
                 }
             }
 
-        // DEBUG LOGGING
-        var now = new Date();
-        var time = ('0' + now.getHours()).slice(-2) + ":" + ('0' + now.getMinutes()).slice(-2) + ":" + ('0' + now.getSeconds()).slice(-2) + "." + ('00' + now.getUTCMilliseconds()).slice(-3);
-        console.log(`${time} [\x1b[33mParkDS: \x1b[1mQueue\x1b[0m]: Package Resolved (Total Containers Left: ${this._queue.length})`);
+        this.Log(`Package Resolved (Total Containers Left: ${this._queue.length})`);
+    }
+
+    Log(message, isError) {
+        var obj;
+        if (isError) {
+            obj = new Object({
+                Name: "\x1b[33mParkDS: \x1b[1mQueue\x1b[0m",
+                Time: new Date(),
+                Error: message
+            });
+        } else {
+            obj = new Object({
+                Name: "\x1b[33mParkDS: \x1b[1mQueue\x1b[0m",
+                Time: new Date(),
+                Message: message
+            });
+        }
+        for (var i in this.Loggers) {
+            this.Loggers[i].Log(obj);
+        }
+    }
+
+    /**
+     * Add a logging tool to the Queue (REQUIRES method Log(obj))
+     * @param {Object} observer The logging observer
+     */
+    AddLogObserver(observer) {
+        this.Loggers.push(observer);
     }
 }
 

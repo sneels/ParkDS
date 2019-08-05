@@ -3,7 +3,7 @@
 const MsSql = require('mssql');
 
 const DeferredState = require('promised-deferred');
-const IConnector = (new (require('./ParkDS'))).DataSource.Connector.IConnector;
+const IConnector = (new (require('../../..'))).DataSource.Connector.IConnector;
 
 class MsSqlConnector extends IConnector {
     /**
