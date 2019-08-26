@@ -1,6 +1,6 @@
 {
   "name": "parkds",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "description": "A Datasource framework that letss you grab any given Data Source in one or more domains",
   "main": "index.js",
   "scripts": {
