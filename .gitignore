@@ -6,3 +6,12 @@
 /obj/Debug
 
 
+/.vscode
+/bin
+/config.json
+/app.js
+/Connector.MsSql.js
+/Connector.MySql.js
+/package-lock.json
+/ParkDS.njsproj
+/Certificates

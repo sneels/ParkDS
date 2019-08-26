@@ -1,18 +1,38 @@
 {
   "name": "parkds",
-  "version": "0.0.3",
-  "description": "ParkDS is a park of data sources over 1 or more networks",
+  "version": "0.0.9",
+  "description": "A Datasource framework that letss you grab any given Data Source in one or more domains",
   "main": "index.js",
-  "author": {
-    "name": "Stijn Neels"
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sneels/ParkDS.git"
+  },
+  "keywords": [
+    "data",
+    "source",
+    "datasource",
+    "db",
+    "database",
+    "cross-domain",
+    "websockets"
+  ],
+  "author": "Stijn Neels",
+  "license": "ISC",
+  "homepage": "https://github.com/sneels/ParkDS#readme",
+  "bugs": {
+    "url": "https://github.com/sneels/ParkDS/issues"
   },
   "dependencies": {
+    "error-to-json": "^1.1.0",
     "md5": "^2.2.1",
+    "uuid": "^3.3.3",
+    "ws": "^7.1.2"
+  },
+  "devDependencies": {
     "mssql": "^5.1.0",
-    "mysql": "^2.17.1",
-    "node-enumjs": "^1.0.2",
-    "promised-deferred": "^2.0.2",
-    "uuid": "^3.3.2",
-    "ws": "^7.1.0"
+    "mysql": "^2.17.1"
   }
 }
