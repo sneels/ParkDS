@@ -1,5 +1,5 @@
 ﻿# ParkDS: A Cross-Domain Data Source Collection
- ParkDS is a simple library that allows for several Data sources *(databases, file servers, etc.)* to be able to connect to eachother in a safe and quick way by using SSL WebSocket connections between each domain.
+ ParkDS is a simple library that allows for several Data sources *(databases, file servers, etc.)* to be able to connect to each other in a safe and quick way by using SSL WebSocket connections between each domain.
 
 # Table of Contents
 * [Installation](#installation)
