@@ -12,7 +12,7 @@
      * [My SQL](#usagePreviewConnectorsMysql)
    * [Logging](#logging)
      * [Logging Observer](#loggingObserver)
-* License
+* [License](#license)
 <a name="installation"/>
 
 # Installation
