@@ -113,35 +113,37 @@ domain.Account.Passworkd = "pass";
 Config.Domains.Add(domain);
 
 // Let's add another cloud domain
-domain = new ParkDS.Config.Domain();
-domain.Name = "Cloud2";
-domain.Path = "cloud2.example.org";
-domain.Port = 44300;
-domain.IsCloud = true;
-domain.Account.User = "user";
-domain.Account.Passworkd = "pass";
+const domain2 = new ParkDS.Config.Domain();
+domain2.Name = "Cloud2";
+domain2.Path = "cloud2.example.org";
+domain2.Port = 44300;
+domain2.IsCloud = true;
+domain2.Account.User = "user";
+domain2.Account.Passworkd = "pass";
+// Add the domain to the Config list
+Config.Domains.Add(domain2);
 
 // Let's add an on-premise domain
-domain = new ParkDS.Config.Domain();
-domain.Name = "Premise1";
-domain.Path = "premise1.example.org";
-domain.Port = 8080;
-domain.IsCloud = false;
-domain.Account.User = "user";
-domain.Account.Passworkd = "pass";
+const domain3 = new ParkDS.Config.Domain();
+domain3.Name = "Premise1";
+domain3.Path = "premise1.example.org";
+domain3.Port = 8080;
+domain3.IsCloud = false;
+domain3.Account.User = "user";
+domain3.Account.Passworkd = "pass";
 // Add the domain to the Config list
 Config.Domains.Add(domain);
 
 // Let's add an on-premise domain
-domain = new ParkDS.Config.Domain();
-domain.Name = "Premise1";
-domain.Path = "premise1.example.org";
-domain.Port = 8000;
-domain.IsCloud = false;
-domain.Account.User = "user";
-domain.Account.Passworkd = "pass";
+const domain4 = new ParkDS.Config.Domain();
+domain4.Name = "Premise2";
+domain4.Path = "premise2.example.org";
+domain4.Port = 8000;
+domain4.IsCloud = false;
+domain4.Account.User = "user";
+domain4.Account.Passworkd = "pass";
 // Add the domain to the Config list
-Config.Domains.Add(domain);
+Config.Domains.Add(domain4);
 
 // Set the current domain
 // And Admin Account is required upon creation, but is as of yet not implemented
@@ -488,6 +490,7 @@ class SomethingThatNeedsToOutputLogsInParkDS {
 
 #### Logger Observer
 ```javascript
+"use strict";
 
 class LogObserver {
     Update(log) {
@@ -496,22 +499,7 @@ class LogObserver {
         switch (log.Type) {
             case LogType.ERROR:
                 output = `\x1b[31m${time} [${log.Entity.Name}]: Error Thrown:\x1b[0m`;
-                console.log(log.Content); 
-class LogObserver {
-    Update(log) {
-        var time = ('0' + log.TimeStamp.getHours()).slice(-2) + ":" + ('0' + log.TimeStamp.getMinutes()).slice(-2) + ":" + ('0' + log.TimeStamp.getSeconds()).slice(-2) + "." + ('00' + log.TimeStamp.getUTCMilliseconds()).slice(-3);
-        var output;
-        switch (log.Type) {
-            case LogType.ERROR:
-                output = `\x1b[31m${time} [${log.Entity.Name}]: Error Thrown:\x1b[0m`;
-                console.log(log.Content); 
-class LogObserver {
-    Update(log) {
-        var time = ('0' + log.TimeStamp.getHours()).slice(-2) + ":" + ('0' + log.TimeStamp.getMinutes()).slice(-2) + ":" + ('0' + log.TimeStamp.getSeconds()).slice(-2) + "." + ('00' + log.TimeStamp.getUTCMilliseconds()).slice(-3);
-        var output;
-        switch (log.Type) {
-            case LogType.ERROR:
-                output = `\x1b[31m${time} [${log.Entity.Name}]: Error Thrown:\x1b[0m`;
+                console.log(output);
                 console.log(log.Content);
                 break;
             case LogType.TRAFFIC:
@@ -527,34 +515,10 @@ class LogObserver {
     constructor() {
     }
 }
-                break;
-            case LogType.TRAFFIC:
-                output = `${time} \x1b[0m[\x1b[35m${log.Entity.Name}\x1b[0m]: \x1b[32m${log.Content}\x1b[0m`;
-                console.log(output);
-                break;
-            case LogType.STATUS:
-                output = `${time} [\x1b[33m${log.Entity.Name} Status:\x1b[0m ${log.Content}]`;
-                console.log(output);
-                break;
-        }
-    }
-    constructor() {
-    }
-}
-                break;
-            case LogType.TRAFFIC:
-                output = `${time} \x1b[0m[\x1b[35m${log.Entity.Name}\x1b[0m]: \x1b[32m${log.Content}\x1b[0m`;
-                console.log(output);
-                break;
-            case LogType.STATUS:
-                output = `${time} [\x1b[33m${log.Entity.Name} Status:\x1b[0m ${log.Content}]`;
-                console.log(output);
-                break;
-        }
-    }
-    constructor() {
-    }
-}
+
+const ParkDS = require('parkds');
+const logObserver = new LogObserver();
+ParkDS.Logger.Instance.AddObserver(logObserver); //Adds the observer so it will receive logs
 ```
 
 ParkDS only logs locally, so the logging is decentralized, however, you can very easily send the logs to a central point. In your logger observer you can choose to send a log through ParkDS itself, and on the central logging server, create a custom connector that can receive them. This is not how ParkDS is intended to be used, but it is perfectly doable.
