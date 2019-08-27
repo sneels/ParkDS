@@ -20,7 +20,7 @@
     "websockets"
   ],
   "author": "Stijn Neels",
-  "license": "ISC",
+  "license": "MIT",
   "homepage": "https://github.com/sneels/ParkDS#readme",
   "bugs": {
     "url": "https://github.com/sneels/ParkDS/issues"
