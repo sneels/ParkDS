@@ -10,6 +10,8 @@
    * [Preview Connectors](#usagePreviewConnectors)
      * [MS SQL](#usagePreviewConnectorsMssql)
      * [My SQL](#usagePreviewConnectorsMysql)
+   * [Logging](#logging)
+     * [Logging Observer](#loggingObserver)
 <a name="installation"/>
 
 # Installation
@@ -442,6 +444,7 @@ class MySqlconnector extends EConnector {
 }
 module.exports = MySqlconnector;
 ```
+<a name="logging"/>
 
 ### ParkDS Logging
 ParkDS comes with it's own logging system following the Observer Design Pattern.
@@ -480,6 +483,7 @@ class SomethingThatNeedsToOutputLogsInParkDS {
     }
 }
 ```
+<a name="loggingObserver"/>
 
 #### Logger Observer
 ```javascript
@@ -551,3 +555,5 @@ class LogObserver {
     }
 }
 ```
+
+ParkDS only logs locally, so the logging is decentralized, however, you can very easily send the logs to a central point. In your logger observer you can choose to send a log through ParkDS itself, and on the central logging server, create a custom connector that can receive them. This is not how ParkDS is intended to be used, but it is perfectly doable.
