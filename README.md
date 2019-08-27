@@ -12,6 +12,7 @@
      * [My SQL](#usagePreviewConnectorsMysql)
    * [Logging](#logging)
      * [Logging Observer](#loggingObserver)
+* License
 <a name="installation"/>
 
 # Installation
@@ -557,3 +558,8 @@ class LogObserver {
 ```
 
 ParkDS only logs locally, so the logging is decentralized, however, you can very easily send the logs to a central point. In your logger observer you can choose to send a log through ParkDS itself, and on the central logging server, create a custom connector that can receive them. This is not how ParkDS is intended to be used, but it is perfectly doable.
+
+<a name="license">
+ 
+ # License
+ <a href="https://github.com/sneels/ParkDS/edit/master/LICENSE">MIT</a>
