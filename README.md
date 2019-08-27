@@ -8,8 +8,8 @@
    * [Single-Domain](#usageSetupSingle)
    * [Cross-Domain](#usageSetupMulti)
    * [Preview Connectors](#usagePreviewConnectors)
-    * [MS SQL](#usagePreviewConnectorsMssql)
-    * [My SQL](#usagePreviewConnectorsMysql)
+     * [MS SQL](#usagePreviewConnectorsMssql)
+     * [My SQL](#usagePreviewConnectorsMysql)
 <a name="installation"/>
 
 # Installation
