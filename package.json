@@ -1,15 +1,8 @@
 {
   "name": "parkds",
   "version": "0.1.0",
-  "description": "A Datasource framework that letss you grab any given Data Source in one or more domains",
+  "description": "Connect all your Data Sources via 1 process (Cross-Domain + Single-Domain)",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/sneels/ParkDS.git"
-  },
   "keywords": [
     "data",
     "source",
@@ -17,22 +10,23 @@
     "db",
     "database",
     "cross-domain",
-    "websockets"
+    "websockets",
+    "datasources"
   ],
-  "author": "Stijn Neels",
+  "author": "Stijn Neels <stijn.neels@fracarita.org>",
   "license": "MIT",
   "homepage": "https://github.com/sneels/ParkDS#readme",
   "bugs": {
     "url": "https://github.com/sneels/ParkDS/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sneels/ParkDS.git"
   },
   "dependencies": {
     "error-to-json": "^1.1.0",
     "md5": "^2.2.1",
     "uuid": "^3.3.3",
     "ws": "^7.1.2"
-  },
-  "devDependencies": {
-    "mssql": "^5.1.0",
-    "mysql": "^2.17.1"
   }
 }
