@@ -5,11 +5,11 @@
 * [Installation](#installation)
 * [Usage](#usage)
   * [Setting Up ParkDS](#usageSetup)
-    * [Single-Domain](#usageSetupSingle)
-      * [Preview Connectors](#usagePreviewConnectors)
-        * [MS SQL](#usagePreviewConnectorsMssql)
-        * [My SQL](#usagePreviewConnectorsMysql)
+   * [Single-Domain](#usageSetupSingle)
    * [Cross-Domain](#usageSetupMulti)
+   * [Preview Connectors](#usagePreviewConnectors)
+    * [MS SQL](#usagePreviewConnectorsMssql)
+    * [My SQL](#usagePreviewConnectorsMysql)
 <a name="installation"/>
 
 # Installation
@@ -31,6 +31,7 @@ First off, you'll need to build your ParkDS Config, how you store that config is
 ### Setting up the config for Single-Domain
 **The configuration:**
 ```javascript
+const fs = require('fs');
 const ParkDS = require('parkds');
 const Config = ParkDS.Config.Instance;
 
@@ -39,11 +40,20 @@ const domain = new ParkDS.Config.Domain();
 domain.Name = "Local";
 domain.Path = "local.example.org";
 domain.Port = 443;
-domain.IsCloud = false; // Important if you are working in single-domain, setting this to true will start an arbitrary websocket server.
+// Important if you are working in single-domain, setting this to true will start an arbitrary websocket server.
+domain.IsCloud = false; 
 domain.Account.User = "user";
 domain.Account.Passworkd = "pass";
 
 Config.Domains.Add(domain);
+
+// Set the current domain
+// And Admin Account is required upon creation, but is as of yet not implemented
+Config.Settings.Set(domain, domain.Account, domain.Account); 
+
+// Add Certificates
+Config.Certificate.Cert = fs.readFileSync('./cert.pem');
+Config.Certificate.Key = fs.readFileSync('./key.pem');
 
 // Let's add a MySql database
 const datasource = new ParkDS.Config.DataSource();
@@ -63,10 +73,138 @@ datasource2.Path = "path.to.mssql.database";
 datasource2.Option = {} // This may be relevant later, see the Creating a Connector section
 
 Config.DataSources.Add(datasource2);
+
+// Set up the Data Source Connectors
+// MyMySqlDB
+const myMysqlConnector = require('./myMysqlConnector');
+const mysqlconn = new myMysqlConnector(ParkDS.Config.Instance.GetDataSourceByName('MyMySqlDB'));
+ParkDS.Connector.Instance.Add(mysqlconn);
+
+//MsSqlDatabase
+const myMssqlConnector = require('./myMssqlConnector');
+const mssqlconn = new myMssqlConnector(ParkDS.Config.Instance.GetDataSourceByName('MsSqlDatabase');
+ParkDS.Connector.Instance.Add(mssqlconn);
+
+// Start ParkDS
+const pds = new ParkDS();
+pds.Start();
+// Connectors are connected, if websocket connections are required, they are started, if need be, the websocket server is running.
+```
+<a name="usageSetupMulti"/>
+
+### Setting up the config for Cross-Domain
+
+```javascript
+const ParkDS = require('parkds');
+const Config = ParkDS.Config.Instance;
+// Let's add a cloud domain
+let domain = new ParkDS.Config.Domain();
+domain.Name = "Cloud1";
+domain.Path = "cloud1.example.org";
+domain.Port = 443;
+domain.IsCloud = true;
+domain.Account.User = "user";
+domain.Account.Passworkd = "pass";
+
+// Add the domain to the Config list
+Config.Domains.Add(domain);
+
+// Let's add another cloud domain
+domain = new ParkDS.Config.Domain();
+domain.Name = "Cloud2";
+domain.Path = "cloud2.example.org";
+domain.Port = 44300;
+domain.IsCloud = true;
+domain.Account.User = "user";
+domain.Account.Passworkd = "pass";
+
+// Let's add an on-premise domain
+domain = new ParkDS.Config.Domain();
+domain.Name = "Premise1";
+domain.Path = "premise1.example.org";
+domain.Port = 8080;
+domain.IsCloud = false;
+domain.Account.User = "user";
+domain.Account.Passworkd = "pass";
+// Add the domain to the Config list
+Config.Domains.Add(domain);
+
+// Let's add an on-premise domain
+domain = new ParkDS.Config.Domain();
+domain.Name = "Premise1";
+domain.Path = "premise1.example.org";
+domain.Port = 8000;
+domain.IsCloud = false;
+domain.Account.User = "user";
+domain.Account.Passworkd = "pass";
+// Add the domain to the Config list
+Config.Domains.Add(domain);
+
+// Set the current domain
+// And Admin Account is required upon creation, but is as of yet not implemented
+Config.Settings.Set(Config.Domains.GetDomainByName('Premise1'), Config.Domains.GetDomainByName('Premise1').Account, Config.Domains.GetDomainByName('Premise1').Account); 
+
+// Add Certificates
+Config.Certificate.Cert = fs.readFileSync('./cert.pem');
+Config.Certificate.Key = fs.readFileSync('./key.pem');
+
+// Let's add a MySql database
+const datasource = new ParkDS.Config.DataSource();
+datasource.Name = "MyMySqlDB";
+datasource.Type = "MySql";
+datasource.Domain = "Cloud1" // this has to be the name of the domain we added to the config
+datasource.Path = "path.to.mysql.database";
+datasource.Option = {} // This may be relevant later, see the Creating a Connector section
+
+Config.DataSources.Add(datasource);
+
+// Let's add a MySql database
+const datasource2 = new ParkDS.Config.DataSource();
+datasource2.Name = "MyOtherMySqlDB";
+datasource2.Type = "MySql";
+datasource2.Domain = "Cloud2" // this has to be the name of the domain we added to the config
+datasource2.Path = "path.to.mysql.database";
+datasource2.Option = {} // This may be relevant later, see the Creating a Connector section
+
+Config.DataSources.Add(datasource2);
+
+const datasource3 = new ParkDS.Config.DataSource();
+datasource3.Name = "MsSqlDatabase";
+datasource3.Type = "mssql";
+datasource3.Domain = "Premise2" // this has to be the name of the domain we added to the config
+datasource3.Path = "path.to.mssql.database";
+datasource3.Option = {} // This may be relevant later, see the Creating a Connector section
+
+Config.DataSources.Add(datasource3);
+
+const datasource4 = new ParkDS.Config.DataSource();
+datasource4.Name = "MsSqlDatabase";
+datasource4.Type = "mssql";
+datasource4.Domain = "Cloud2" // this has to be the name of the domain we added to the config
+datasource4.Path = "path.to.mssql.database";
+datasource4.Option = {} // This may be relevant later, see the Creating a Connector section
+
+Config.DataSources.Add(datasource4);
+
+// Set up the Data Source Connectors
+// MyMySqlDB
+const myMysqlConnector = require('./myMysqlConnector');
+const mysqlconn = new myMysqlConnector(ParkDS.Config.Instance.GetDataSourceByName('MyMySqlDB'));
+ParkDS.Connector.Instance.Add(mysqlconn);
+
+//MsSqlDatabase
+const myMssqlConnector = require('./myMssqlConnector');
+const mssqlconn = new myMssqlConnector(ParkDS.Config.Instance.GetDataSourceByName('MsSqlDatabase');
+ParkDS.Connector.Instance.Add(mssqlconn);
+
+// Start ParkDS
+const pds = new ParkDS();
+pds.Start();
+// Connectors are connected, if websocket connections are required, they are started, if need be, the websocket server is running.
 ```
 <a name="usagePreviewConnectors"/>
 
-#### Preview connectors
+### Preview connectors
 
 <a name="usagePreviewConnectorsMssql"/>
 
@@ -303,35 +441,4 @@ class MySqlconnector extends EConnector {
     }
 }
 module.exports = MySqlconnector;
-```
-<a name="usageSetupMulti"/>
-
-### Setting up the config for Cross-Domain
-
-```javascript
-const ParkDS = require('parkds');
-const Config = ParkDS.Config.Instance;
-// Let's add a cloud domain
-let domain = new ParkDS.Config.Domain();
-domain.Name = "Cloud1";
-domain.Path = "cloud1.example.org";
-domain.Port = 443;
-domain.IsCloud = true;
-domain.Account.User = "user";
-domain.Account.Passworkd = "pass";
-
-// Add the domain to the Config list
-Config.Domains.Add(domain);
-
-
-domain = new ParkDS.Config.Domain();
-domain.Name = "Cloud1";
-domain.Path = "cloud1.example.org";
-domain.Port = 443;
-domain.IsCloud = true;
-domain.Account.User = "user";
-domain.Account.Passworkd = "pass";
-
-// Add the domain to the Config list
-Config.Domains.Add(domain);
 ```
