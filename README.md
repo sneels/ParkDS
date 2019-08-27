@@ -205,7 +205,7 @@ pds.Start();
 <a name="usagePreviewConnectors"/>
 
 ### Preview connectors
-
+You have to write your own connectors to use ParkDS, below you have a couple of examples to see how the structure works, you'll also see that ParkDS.Logger objects are loaded in as well, more info about the logging system in the next chapter.
 <a name="usagePreviewConnectorsMssql"/>
 
 **MS SQL:**
@@ -441,4 +441,113 @@ class MySqlconnector extends EConnector {
     }
 }
 module.exports = MySqlconnector;
+```
+
+### ParkDS Logging
+ParkDS comes with it's own logging system following the Observer Design Pattern.
+the logger outputs an object with 3 properties: `Entity (Name, Domain)`, `LogType (ERROR, STATUS, TRAFFIC)`, and `Content`).
+To add an observer to the Logging system, you'll need an object with an `Update` method that takes a `ParkDS.Logger.Log` object as an argument.
+
+ParkDS outputs 3 types of logs:
+* **ERROR:** Any errors being thrown inside of ParkDS will go through here. ParkDS should not stop working when an error occurs, so we advice at least listening to these.
+* **STATUS:** this outputs any status changes inside of ParkDS (Connecter went down, WebSocket Connection dropped, etc.).
+* **TRAFFIC:** Outputs the traffic through ParkDS (if a package is received, added to the queue, send to another domain, resolved, etc., this happens for EVERY transaction you do through ParkDS and will be a heavy load when lots of transactions are run).
+
+When writing your own connector you need to load in `Entity`, `LogType`, and `Log`.
+
+In your connector, add a property of type `Entity`.
+```javascript
+const ParkDS = require('parkds');
+const Entity = ParkDS.Logger.Entity;
+const Log = ParkDS.Logger.Log;
+const LogType = ParkDS.Logger.LogType;
+
+class SomethingThatNeedsToOutputLogsInParkDS {
+    constructor() {
+        this._entity = new Entity();
+        this._entity.Name = "name";
+        this._entity.Domain = "domain name";
+    }
+    
+    Method() {
+       try {
+         Log.Register(this._entity, LogType.STATUS, 1);
+         Log.Register(this._entity, LogType.TRAFFIC, "Method() is running");
+       } catch (e) {         
+         Log.Register(this._entity, LogType.STATUS, 0);
+         Log.Register(this._entity, LogType.ERROR, e);
+       }
+    }
+}
+```
+
+#### Logger Observer
+```javascript
+
+class LogObserver {
+    Update(log) {
+        var time = ('0' + log.TimeStamp.getHours()).slice(-2) + ":" + ('0' + log.TimeStamp.getMinutes()).slice(-2) + ":" + ('0' + log.TimeStamp.getSeconds()).slice(-2) + "." + ('00' + log.TimeStamp.getUTCMilliseconds()).slice(-3);
+        var output;
+        switch (log.Type) {
+            case LogType.ERROR:
+                output = `\x1b[31m${time} [${log.Entity.Name}]: Error Thrown:\x1b[0m`;
+                console.log(log.Content); 
+class LogObserver {
+    Update(log) {
+        var time = ('0' + log.TimeStamp.getHours()).slice(-2) + ":" + ('0' + log.TimeStamp.getMinutes()).slice(-2) + ":" + ('0' + log.TimeStamp.getSeconds()).slice(-2) + "." + ('00' + log.TimeStamp.getUTCMilliseconds()).slice(-3);
+        var output;
+        switch (log.Type) {
+            case LogType.ERROR:
+                output = `\x1b[31m${time} [${log.Entity.Name}]: Error Thrown:\x1b[0m`;
+                console.log(log.Content); 
+class LogObserver {
+    Update(log) {
+        var time = ('0' + log.TimeStamp.getHours()).slice(-2) + ":" + ('0' + log.TimeStamp.getMinutes()).slice(-2) + ":" + ('0' + log.TimeStamp.getSeconds()).slice(-2) + "." + ('00' + log.TimeStamp.getUTCMilliseconds()).slice(-3);
+        var output;
+        switch (log.Type) {
+            case LogType.ERROR:
+                output = `\x1b[31m${time} [${log.Entity.Name}]: Error Thrown:\x1b[0m`;
+                console.log(log.Content);
+                break;
+            case LogType.TRAFFIC:
+                output = `${time} \x1b[0m[\x1b[35m${log.Entity.Name}\x1b[0m]: \x1b[32m${log.Content}\x1b[0m`;
+                console.log(output);
+                break;
+            case LogType.STATUS:
+                output = `${time} [\x1b[33m${log.Entity.Name} Status:\x1b[0m ${log.Content}]`;
+                console.log(output);
+                break;
+        }
+    }
+    constructor() {
+    }
+}
+                break;
+            case LogType.TRAFFIC:
+                output = `${time} \x1b[0m[\x1b[35m${log.Entity.Name}\x1b[0m]: \x1b[32m${log.Content}\x1b[0m`;
+                console.log(output);
+                break;
+            case LogType.STATUS:
+                output = `${time} [\x1b[33m${log.Entity.Name} Status:\x1b[0m ${log.Content}]`;
+                console.log(output);
+                break;
+        }
+    }
+    constructor() {
+    }
+}
+                break;
+            case LogType.TRAFFIC:
+                output = `${time} \x1b[0m[\x1b[35m${log.Entity.Name}\x1b[0m]: \x1b[32m${log.Content}\x1b[0m`;
+                console.log(output);
+                break;
+            case LogType.STATUS:
+                output = `${time} [\x1b[33m${log.Entity.Name} Status:\x1b[0m ${log.Content}]`;
+                console.log(output);
+                break;
+        }
+    }
+    constructor() {
+    }
+}
 ```
