@@ -1,8 +1,45 @@
 {
-  "name": "parkds",
-  "version": "0.1.0",
+  "_from": "parkds",
+  "_id": "parkds@0.1.0",
+  "_inBundle": false,
+  "_integrity": "sha512-+b00DhIcl1OdH1BCJRMnRgIGGKdCfzX56s4GvSsI2nShdCRmXmEOsgpDQZ4QA9rRa8h5bhsdW3SBBv58BtnDCg==",
+  "_location": "/parkds",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "tag",
+    "registry": true,
+    "raw": "parkds",
+    "name": "parkds",
+    "escapedName": "parkds",
+    "rawSpec": "",
+    "saveSpec": null,
+    "fetchSpec": "latest"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/parkds/-/parkds-0.1.0.tgz",
+  "_shasum": "3a57919a112118cc03921b3c9bbe6af2e80766c6",
+  "_spec": "parkds",
+  "_where": "C:\\Projects\\Visual Studio\\Fracarita\\Digitaal Platform\\v2\\Digitaal Platform\\Digitaal Platform",
+  "author": {
+    "name": "Stijn Neels",
+    "email": "stijn.neels@fracarita.org"
+  },
+  "bugs": {
+    "url": "https://github.com/sneels/ParkDS/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "error-to-json": "^1.1.0",
+    "md5": "^2.2.1",
+    "uuid": "^3.3.3",
+    "ws": "^7.1.2"
+  },
+  "deprecated": false,
   "description": "Connect all your Data Sources via 1 process (Cross-Domain + Single-Domain)",
-  "main": "index.js",
+  "homepage": "https://github.com/sneels/ParkDS#readme",
   "keywords": [
     "data",
     "source",
@@ -13,20 +50,12 @@
     "websockets",
     "datasources"
   ],
-  "author": "Stijn Neels <stijn.neels@fracarita.org>",
   "license": "MIT",
-  "homepage": "https://github.com/sneels/ParkDS#readme",
-  "bugs": {
-    "url": "https://github.com/sneels/ParkDS/issues"
-  },
+  "main": "index.js",
+  "name": "parkds",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sneels/ParkDS.git"
   },
-  "dependencies": {
-    "error-to-json": "^1.1.0",
-    "md5": "^2.2.1",
-    "uuid": "^3.3.3",
-    "ws": "^7.1.2"
-  }
+  "version": "0.1.0"
 }
