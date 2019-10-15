@@ -193,12 +193,12 @@ Config.DataSources.Add(datasource4);
 // MyMySqlDB
 const myMysqlConnector = require('./myMysqlConnector');
 const mysqlconn = new myMysqlConnector(ParkDS.Config.Instance.GetDataSourceByName('MyMySqlDB'));
-ParkDS.Connector.Instance.Add(mysqlconn);
+ParkDS.Connectors.Instance.Add(mysqlconn);
 
 //MsSqlDatabase
 const myMssqlConnector = require('./myMssqlConnector');
 const mssqlconn = new myMssqlConnector(ParkDS.Config.Instance.GetDataSourceByName('MsSqlDatabase');
-ParkDS.Connector.Instance.Add(mssqlconn);
+ParkDS.Connectors.Instance.Add(mssqlconn);
 
 // Start ParkDS
 const pds = new ParkDS();
